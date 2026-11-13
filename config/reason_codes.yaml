@@ -1,0 +1,13 @@
+# Controlled reason-code taxonomy (BR-05 / FR-09). Features are matched by fnmatch pattern.
+RC01: {text: "Unusually high payment activity in a short time", features: ["cust_cnt_*", "cust_sum_*", "card_cnt_*", "card_sum_*", "cust_burst_1h", "secs_since_last"]}
+RC02: {text: "Device is shared with, or used by, many accounts", features: ["dev_cnt_*", "dev_sum_*", "g_dev_n_accts", "g_acct_n_devs", "g_nbr_accts_30d"]}
+RC03: {text: "New or unfamiliar device for this customer", features: ["new_dev_for_cust", "n_cust_dev", "newdev_high_amt"]}
+RC04: {text: "Amount is unusual compared with the customer's history", features: ["amount", "log_amount", "amount_z", "amount_over_max", "cust_amt_*"]}
+RC05: {text: "Location or network risk (IP reputation, country, travel speed)", features: ["ip_cnt_*", "ip_sum_*", "ip_rep", "ip_country_mismatch", "geo_*", "g_ip_*"]}
+RC06: {text: "Recipient account is new or unfamiliar", features: ["new_ben_for_cust", "ben_cnt_*", "ben_sum_*", "g_ben_n_senders*"]}
+RC07: {text: "Linked to previously confirmed fraud", features: ["g_dev_taint", "g_ip_taint", "g_ben_taint", "g_acct_taint", "g_ben_dev_taint", "g_nbr_taint"]}
+RC08: {text: "Merchant or category risk", features: ["mer_cnt_*", "mer_sum_*", "merchant_cat", "new_mer_for_cust", "bin_risk"]}
+RC09: {text: "New or low-history account", features: ["account_age_days", "kyc_level", "risk_tier", "cust_prior_txns"]}
+RC10: {text: "Behaviour pattern is unusual compared with normal traffic", features: ["anomaly_score", "hour", "dow", "is_a2a"]}
+RC11: {text: "Linked to a suspected mule network (graph model)", features: ["gnn_*"]}
+RC99: {text: "Combination of risk signals", features: []}

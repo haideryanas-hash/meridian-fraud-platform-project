@@ -1,0 +1,125 @@
+{
+  "dev_threshold_search": {
+    "3.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 2.549224537037037,
+      "share_detected_within_3d": 0.6,
+      "community_precision": 0.16350411132194814,
+      "avg_flagged_per_day": 105.4
+    },
+    "5.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 2.549224537037037,
+      "share_detected_within_3d": 0.6,
+      "community_precision": 0.22178988326848248,
+      "avg_flagged_per_day": 68.53333333333333
+    },
+    "7.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 2.549224537037037,
+      "share_detected_within_3d": 0.6,
+      "community_precision": 0.35288888888888886,
+      "avg_flagged_per_day": 37.5
+    },
+    "9.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 2.767326388888889,
+      "share_detected_within_3d": 0.4,
+      "community_precision": 0.5256410256410257,
+      "avg_flagged_per_day": 20.8
+    },
+    "11.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 3.2491898148148146,
+      "share_detected_within_3d": 0.3,
+      "community_precision": 0.7955390334572491,
+      "avg_flagged_per_day": 8.966666666666667
+    }
+  },
+  "chosen_flag_score": 11.0,
+  "test_with_model_seeds": {
+    "window_days": [
+      100,
+      210
+    ],
+    "flag_score": 11.0,
+    "rings_eligible": 21,
+    "rings_detected": 21,
+    "detection_rate": 1.0,
+    "median_ttd_days_detected": 2.960497685185185,
+    "p90_ttd_days_detected": 4.840543981481481,
+    "share_detected_within_3d": 0.5238095238095238,
+    "flagged_communities_total": 1421,
+    "community_precision": 0.6537649542575651,
+    "avg_flagged_per_day": 12.918181818181818,
+    "use_model_seeds": true,
+    "ttd_by_ring": {
+      "161": 3.587835648148148,
+      "164": 1.4603587962962963,
+      "166": 1.6217824074074074,
+      "169": 6.438935185185185,
+      "171": 1.7123032407407408,
+      "172": 1.2164699074074075,
+      "174": 2.272662037037037,
+      "182": 4.840543981481481,
+      "185": 3.816388888888889,
+      "187": 1.7900810185185185,
+      "188": 2.2549189814814814,
+      "189": 4.108263888888889,
+      "190": 2.960497685185185,
+      "191": 3.928148148148148,
+      "192": 11.847280092592593,
+      "195": 1.8550810185185185,
+      "197": 3.853414351851852,
+      "198": 2.640578703703704,
+      "199": 3.3788425925925925,
+      "203": 0.5100231481481482,
+      "204": 4.091423611111111
+    }
+  },
+  "test_labels_only_seeds": {
+    "window_days": [
+      100,
+      210
+    ],
+    "flag_score": 11.0,
+    "rings_eligible": 21,
+    "rings_detected": 21,
+    "detection_rate": 1.0,
+    "median_ttd_days_detected": 4.816388888888889,
+    "p90_ttd_days_detected": 7.790081018518518,
+    "share_detected_within_3d": 0.19047619047619047,
+    "flagged_communities_total": 708,
+    "community_precision": 0.9477401129943502,
+    "avg_flagged_per_day": 6.4363636363636365,
+    "use_model_seeds": false,
+    "ttd_by_ring": {
+      "161": 4.587835648148148,
+      "164": 4.460358796296297,
+      "166": 4.621782407407407,
+      "169": 6.438935185185185,
+      "171": 2.7123032407407406,
+      "172": 6.216469907407407,
+      "174": 7.272662037037037,
+      "182": 4.840543981481481,
+      "185": 4.816388888888889,
+      "187": 7.790081018518518,
+      "188": 3.2549189814814814,
+      "189": 8.108263888888889,
+      "190": 2.960497685185185,
+      "191": 6.928148148148148,
+      "192": 10.847280092592593,
+      "195": 2.8550810185185185,
+      "197": 3.853414351851852,
+      "198": 4.640578703703704,
+      "199": 5.3788425925925925,
+      "203": 0.5100231481481482,
+      "204": 5.091423611111111
+    }
+  }
+}

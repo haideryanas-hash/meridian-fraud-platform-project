@@ -1,0 +1,45 @@
+{
+  "grid": {
+    "3.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 2.549224537037037,
+      "share_detected_within_3d": 0.6,
+      "community_precision": 0.16350411132194814,
+      "avg_flagged_per_day": 105.4
+    },
+    "5.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 2.549224537037037,
+      "share_detected_within_3d": 0.6,
+      "community_precision": 0.22178988326848248,
+      "avg_flagged_per_day": 68.53333333333333
+    },
+    "7.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 2.549224537037037,
+      "share_detected_within_3d": 0.6,
+      "community_precision": 0.35288888888888886,
+      "avg_flagged_per_day": 37.5
+    },
+    "9.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 2.767326388888889,
+      "share_detected_within_3d": 0.4,
+      "community_precision": 0.5256410256410257,
+      "avg_flagged_per_day": 20.8
+    },
+    "11.0": {
+      "rings_eligible": 10,
+      "rings_detected": 7,
+      "median_ttd_days_detected": 3.2491898148148146,
+      "share_detected_within_3d": 0.3,
+      "community_precision": 0.7955390334572491,
+      "avg_flagged_per_day": 8.966666666666667
+    }
+  },
+  "chosen_flag_score": 11.0
+}

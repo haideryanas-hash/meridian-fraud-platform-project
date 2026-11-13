@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#f8fafc] text-[#0f172a] antialiased">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meridian Pay // Fraud Risk Workbench</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Utilitarian scrollbar & tabular styling */
+    * {
+      box-sizing: border-box;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      opacity: 1;
+    }
+    .field-input {
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #0f172a;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+    .field-input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+    }
+    .field-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: #475569;
+      margin-bottom: 3px;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col text-[13px] leading-snug selection:bg-blue-600 selection:text-white">
+
+  <!-- TOP SYSTEM OPERATIONS BAR -->
+  <header class="bg-[#0f172a] text-slate-200 border-b border-slate-800 sticky top-0 z-30">
+    <div class="max-w-[1600px] mx-auto px-4 h-12 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Left: System Identity & Environment -->
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2.5 h-2.5 bg-blue-500 rounded-sm"></span>
+          <span class="font-mono font-semibold text-xs tracking-tight text-white">MERIDIAN_PAY</span>
+          <span class="text-slate-600 font-mono">/</span>
+          <span class="font-sans font-medium text-xs text-slate-300">Fraud Scoring Workbench</span>
+        </div>
+        <span class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono uppercase bg-slate-800 text-slate-300 border border-slate-700 rounded">
+          OAS 3.1 // v1
+        </span>
+      </div>
+
+      <!-- Center: Live Health Telemetry Strip -->
+      <div class="flex items-center gap-2 sm:gap-4 text-xs font-mono">
+        <!-- Connection Badge -->
+        <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-900 border border-slate-800">
+          <span id="healthDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="healthStatusText" class="text-[11px] font-medium text-slate-300">CHECKING...</span>
+        </div>
+
+        <div class="hidden md:flex items-center gap-3 text-[11px] text-slate-400">
+          <div>
+            <span class="text-slate-500">MODEL:</span>
+            <span id="metaModelVer" class="text-slate-200 font-medium">--</span>
+          </div>
+          <span class="text-slate-700">|</span>
+          <div>
+            <span class="text-slate-500">POLICY:</span>
+            <span id="metaPolicyVer" class="text-slate-200 font-medium">--</span>
+          </div>
+          <span class="text-slate-700">|</span>
+          <div>
+            <span class="text-slate-500">CIRCUIT:</span>
+            <span id="metaCircuit" class="text-slate-200 font-medium">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Target Host Configuration & Health Check Trigger -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center bg-slate-900 border border-slate-700 rounded overflow-hidden">
+          <span class="px-2 py-1 text-[10px] font-mono uppercase text-slate-400 bg-slate-800/80 border-r border-slate-700">API HOST</span>
+          <input
+            id="apiHostInput"
+            type="text"
+            value="http://localhost:8000"
+            class="bg-transparent text-slate-200 font-mono text-xs px-2.5 py-1 w-44 focus:outline-none focus:bg-slate-950"
+            title="FastAPI Server Base URL"
+          />
+        </div>
+        <button
+          id="pingHealthBtn"
+          type="button"
+          onclick="checkHealth(true)"
+          class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-850 text-slate-200 border border-slate-700 rounded text-xs font-mono transition flex items-center gap-1.5"
+          title="GET /healthz"
+        >
+          <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>/healthz</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- CORS / FALLBACK NOTIFICATION BANNER (Hidden when localhost responds) -->
+  <div id="connectionAlertBanner" class="hidden bg-amber-50 border-b border-amber-200 text-amber-950 px-4 py-2 text-xs">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="font-mono font-semibold uppercase px-1.5 py-0.5 bg-amber-200/80 text-amber-900 rounded text-[10px]">LOCALHOST UNREACHABLE OR CORS BLOCKED</span>
+        <span id="connectionAlertMsg">Could not reach <code class="font-mono font-semibold">http://localhost:8000/healthz</code>. Ensure FastAPI is running and <code class="font-mono">CORSMiddleware</code> is added to <code class="font-mono">src/fraudplat/serving/app.py</code>.</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="inline-flex items-center gap-1.5 font-medium cursor-pointer select-none">
+          <input type="checkbox" id="fallbackModeToggle" checked class="rounded border-amber-400 text-blue-600 focus:ring-0" />
+          <span>Use Offline Simulator Fallback if API fails</span>
+        </label>
+        <button onclick="checkHealth(true)" class="underline font-mono font-medium hover:text-amber-700">Retry Connection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN WORKBENCH GRID -->
+  <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+    <!-- LEFT COLUMN: REQUEST PAYLOAD INSPECTOR & BUILDER (5 COLS) -->
+    <section class="lg:col-span-5 bg-white border border-[#e2e8f0] rounded-[5px] shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-col">
+      
+      <!-- Panel Header -->
+      <div class="px-3.5 py-2.5 border-b border-[#e2e8f0] flex items-center justify-between bg-[#f8fafc] rounded-t-[5px]">
+        <div class="flex items-center gap-2">
+          <span class="px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-emerald-600 text-white rounded">POST</span>
+          <span class="font-mono font-semibold text-xs text-slate-900">/v1/score</span>
+          <span class="text-xs text-slate-500">PaymentEvent Payload</span>
+        </div>
+
+        <!-- Mode Switcher: Form vs Raw JSON -->
+        <div class="inline-flex rounded border border-slate-300 bg-white p-0.5 text-[11px] font-medium">
+          <button
+            id="tabFormBtn"
+            type="button"
+            onclick="setInputView('form')"
+            class="px-2 py-0.5 rounded-[3px] bg-slate-900 text-white transition"
+          >
+            Structured Fields
+          </button>
+          <button
+            id="tabJsonBtn"
+            type="button"
+            onclick="setInputView('json')"
+            class="px-2 py-0.5 rounded-[3px] text-slate-600 hover:text-slate-900 transition font-mono"
+          >
+            Raw JSON
+          </button>
+        </div>
+      </div>
+
+      <!-- Preset Scenarios Strip -->
+      <div class="px-3.5 py-2 border-b border-[#e2e8f0] bg-slate-50/60 flex flex-wrap items-center justify-between gap-2">
+        <span class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Test Fixtures:</span>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onclick="loadPreset('swagger_default')"
+            class="px-2 py-1 text-[11px] font-mono bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded transition"
+            title="Exact payload from your Swagger screenshot (#182990)"
+          >
+            #182990 (Swagger A2A)
+          </button>
+          <button
+            type="button"
+            onclick="loadPreset('legit_card')"
+            class="px-2 py-1 text-[11px] font-mono bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded transition"
+          >
+            #183041 (Low Risk Card)
+          </button>
+          <button
+            type="button"
+            onclick="loadPreset('high_risk_ring')"
+            class="px-2 py-1 text-[11px] font-mono bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded transition"
+          >
+            #183109 (Mule Ring)
+          </button>
+        </div>
+      </div>
+
+      <!-- FORM VIEW -->
+      <form id="scoreForm" onsubmit="handleScoreSubmit(event)" class="p-3.5 space-y-4">
+        
+        <!-- Structured Fields Wrapper -->
+        <div id="structuredFormContainer" class="space-y-4">
+          
+          <!-- Group 1: Transaction Core -->
+          <div>
+            <div class="flex items-center justify-between mb-2 pb-1 border-b border-slate-100">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">1. Transaction Core</span>
+              <span class="text-[10px] font-mono text-slate-400">REQUIRED</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div>
+                <label class="field-label" for="f_txn_id"><span>txn_id</span><span class="text-[10px] text-slate-400">int</span></label>
+                <input id="f_txn_id" name="txn_id" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_amount"><span>amount</span><span class="text-[10px] text-slate-400">float</span></label>
+                <input id="f_amount" name="amount" type="number" step="0.01" required class="field-input font-semibold" />
+              </div>
+              <div>
+                <label class="field-label" for="f_event_time"><span>event_time</span><span class="text-[10px] text-slate-400">sec</span></label>
+                <input id="f_event_time" name="event_time" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_is_a2a"><span>is_a2a</span><span class="text-[10px] text-slate-400">0|1</span></label>
+                <select id="f_is_a2a" name="is_a2a" class="field-input">
+                  <option value="1">1 (A2A Transfer)</option>
+                  <option value="0">0 (Card / Rail)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Group 2: Counterparties & Entities -->
+          <div>
+            <div class="flex items-center justify-between mb-2 pb-1 border-b border-slate-100">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">2. Entity Graph Identifiers</span>
+              <span class="text-[10px] font-mono text-slate-400">-1 = UNSET</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div>
+                <label class="field-label" for="f_customer_id"><span>customer_id</span></label>
+                <input id="f_customer_id" name="customer_id" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_beneficiary_id"><span>beneficiary_id</span></label>
+                <input id="f_beneficiary_id" name="beneficiary_id" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_device_id"><span>device_id</span></label>
+                <input id="f_device_id" name="device_id" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_ip_id"><span>ip_id</span></label>
+                <input id="f_ip_id" name="ip_id" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_card_id"><span>card_id</span></label>
+                <input id="f_card_id" name="card_id" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_merchant_id"><span>merchant_id</span></label>
+                <input id="f_merchant_id" name="merchant_id" type="number" step="1" required class="field-input" />
+              </div>
+              <div class="col-span-2">
+                <label class="field-label" for="f_merchant_cat"><span>merchant_cat</span><span class="text-[10px] text-slate-400">MCC code</span></label>
+                <input id="f_merchant_cat" name="merchant_cat" type="number" step="1" required class="field-input" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Group 3: Telemetry, Risk & Geo Signals -->
+          <div>
+            <div class="flex items-center justify-between mb-2 pb-1 border-b border-slate-100">
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">3. Telemetry, KYC & Geospatial</span>
+              <span class="text-[10px] font-mono text-slate-400">FEATURES</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div>
+                <label class="field-label" for="f_kyc_level"><span>kyc_level</span><span class="text-[10px] text-slate-400">1-3</span></label>
+                <input id="f_kyc_level" name="kyc_level" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_risk_tier"><span>risk_tier</span><span class="text-[10px] text-slate-400">tier</span></label>
+                <input id="f_risk_tier" name="risk_tier" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_signup_time"><span>signup_time</span><span class="text-[10px] text-slate-400">sec</span></label>
+                <input id="f_signup_time" name="signup_time" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_ip_country"><span>ip_country</span></label>
+                <input id="f_ip_country" name="ip_country" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_home_country"><span>home_country</span></label>
+                <input id="f_home_country" name="home_country" type="number" step="1" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_ip_rep"><span>ip_rep</span><span class="text-[10px] text-slate-400">0..1</span></label>
+                <input id="f_ip_rep" name="ip_rep" type="number" step="0.01" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_bin_risk"><span>bin_risk</span><span class="text-[10px] text-slate-400">0..1</span></label>
+                <input id="f_bin_risk" name="bin_risk" type="number" step="0.01" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_geo_lat"><span>geo_lat</span></label>
+                <input id="f_geo_lat" name="geo_lat" type="number" step="0.001" required class="field-input" />
+              </div>
+              <div>
+                <label class="field-label" for="f_geo_lon"><span>geo_lon</span></label>
+                <input id="f_geo_lon" name="geo_lon" type="number" step="0.001" required class="field-input" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Raw JSON Editor Container (Hidden by default) -->
+        <div id="rawJsonContainer" class="hidden space-y-2">
+          <div class="flex items-center justify-between text-[11px] text-slate-500">
+            <span class="font-mono">application/json</span>
+            <button type="button" onclick="formatJsonEditor()" class="text-blue-600 hover:underline font-mono">Prettify JSON</button>
+          </div>
+          <textarea
+            id="rawJsonTextarea"
+            rows="16"
+            spellcheck="false"
+            class="w-full font-mono text-xs bg-slate-950 text-slate-100 p-3 rounded border border-slate-700 focus:outline-none focus:border-blue-500 leading-relaxed"
+          ></textarea>
+          <p id="jsonParseError" class="hidden text-xs font-mono text-red-600 bg-red-50 border border-red-200 px-2.5 py-1.5 rounded"></p>
+        </div>
+
+        <!-- Submit Action Bar -->
+        <div class="pt-2 border-t border-slate-200 flex items-center justify-between gap-3">
+          <div class="text-[11px] font-mono text-slate-500 flex items-center gap-2">
+            <span id="requestSpinIndicator" class="hidden w-2 h-2 rounded-full bg-blue-600 animate-ping"></span>
+            <span id="lastRequestLatency">Ready</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              onclick="incrementTxnId()"
+              class="px-2.5 py-1.5 text-xs font-mono text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded transition"
+              title="Increment txn_id by +1"
+            >
+              +1 txn_id
+            </button>
+            <button
+              id="evaluateSubmitBtn"
+              type="submit"
+              class="px-4 py-1.5 bg-[#2563eb] hover:bg-blue-700 active:bg-blue-800 text-white font-medium text-xs rounded shadow-sm transition flex items-center gap-2"
+            >
+              <span>Execute /v1/score</span>
+              <span class="font-mono text-[10px] opacity-80 bg-blue-800/70 px-1.5 py-0.5 rounded">↵</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+
+      <!-- cURL Snippet Accordion -->
+      <div class="border-t border-[#e2e8f0] px-3.5 py-2 bg-slate-50 rounded-b-[5px]">
+        <details class="group">
+          <summary class="cursor-pointer list-none flex items-center justify-between text-[11px] font-mono text-slate-600 hover:text-slate-900">
+            <span>Equivalent cURL Command</span>
+            <span class="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div class="mt-2 relative">
+            <pre id="curlPreviewBox" class="bg-slate-900 text-slate-200 font-mono text-[11px] p-2.5 rounded overflow-x-auto leading-relaxed"></pre>
+            <button
+              type="button"
+              onclick="copyCurlCommand()"
+              id="copyCurlBtn"
+              class="absolute top-1.5 right-1.5 px-2 py-0.5 text-[10px] font-mono bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded"
+            >
+              Copy
+            </button>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: REAL-TIME TELEMETRY, EXPLAINABILITY & LABELS (7 COLS) -->
+    <section class="lg:col-span-7 space-y-4">
+
+      <!-- PRIMARY SCORE & DECISION CARD -->
+      <div class="bg-white border border-[#e2e8f0] rounded-[5px] shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
+        
+        <!-- Top Decision Strip -->
+        <div id="decisionBanner" class="px-4 py-3 border-b border-[#e2e8f0] bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <span id="decisionBadge" class="px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider rounded bg-slate-200 text-slate-700 border border-slate-300">
+              AWAITING EXECUTION
+            </span>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500 font-mono">TXN_ID:</span>
+                <span id="outTxnId" class="font-mono font-semibold text-sm text-slate-900 tabular-nums">--</span>
+                <span id="sourceTag" class="hidden px-1.5 py-0.5 text-[10px] font-mono rounded bg-slate-200 text-slate-700"></span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono">
+                <span>scoring_mode: </span><strong id="outScoringMode" class="text-slate-700">--</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- HTTP Status & Timing -->
+          <div class="flex items-center gap-3 font-mono text-xs">
+            <div class="text-right">
+              <div class="text-[10px] text-slate-400 uppercase">HTTP Status</div>
+              <div id="outHttpCode" class="font-semibold text-slate-700">--</div>
+            </div>
+            <div class="h-6 w-[1px] bg-slate-200"></div>
+            <div class="text-right">
+              <div class="text-[10px] text-slate-400 uppercase">Latency</div>
+              <div id="outLatency" class="font-semibold text-slate-700 tabular-nums">-- ms</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quantitative Probability & Confidence Band Readout -->
+        <div class="p-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center border-b border-[#e2e8f0]">
+          
+          <!-- Fraud Probability Number -->
+          <div class="md:col-span-4 border-b md:border-b-0 md:border-r border-slate-200 pb-3 md:pb-0 md:pr-4">
+            <div class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Fraud Probability</div>
+            <div class="mt-1 flex items-baseline gap-2">
+              <span id="outProbPercent" class="font-mono text-3xl font-semibold tracking-tight text-slate-900 tabular-nums">--%</span>
+              <span id="outProbRaw" class="font-mono text-xs text-slate-500 tabular-nums">(0.000000)</span>
+            </div>
+            <div class="mt-1.5 text-[11px] font-mono text-slate-500">
+              Band: <span id="outProbBandText" class="text-slate-800 font-medium tabular-nums">[-- , --]</span>
+            </div>
+          </div>
+
+          <!-- Confidence Interval Gauge (0.0 to 1.0) -->
+          <div class="md:col-span-8 space-y-2">
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-500">
+              <span>0.00 (Legitimate)</span>
+              <span>Confidence Interval & Point Estimate</span>
+              <span>1.00 (Confirmed Fraud)</span>
+            </div>
+
+            <!-- Bar Track -->
+            <div class="relative h-6 bg-slate-100 rounded border border-slate-200 overflow-hidden">
+              <!-- Subtle policy threshold gridlines (e.g. 0.35 review, 0.65 decline) -->
+              <div class="absolute inset-y-0 left-[35%] w-[1px] border-l border-dashed border-slate-300" title="Review Threshold"></div>
+              <div class="absolute inset-y-0 left-[65%] w-[1px] border-l border-dashed border-slate-400" title="Decline Threshold"></div>
+
+              <!-- Probability Band Range Bar -->
+              <div
+                id="gaugeBandBar"
+                class="absolute inset-y-1.5 bg-blue-200/80 border border-blue-400 rounded-sm transition-all duration-300"
+                style="left: 0%; width: 0%;"
+                title="probability_band"
+              ></div>
+
+              <!-- Point Estimate Marker -->
+              <div
+                id="gaugePointMarker"
+                class="absolute inset-y-0 w-1 bg-slate-900 transition-all duration-300"
+                style="left: 0%;"
+                title="fraud_probability"
+              ></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[10px] font-mono text-slate-400">
+              <span>0.0</span>
+              <span>0.25</span>
+              <span>0.50</span>
+              <span>0.75</span>
+              <span>1.0</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Reason Codes & Feature Contribution Table -->
+        <div class="p-4">
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="flex items-center gap-2">
+              <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Explainability // Reason Codes (`reason_codes`)</h2>
+              <span id="reasonCountBadge" class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 text-slate-600 rounded border border-slate-200">0</span>
+            </div>
+            <button
+              type="button"
+              onclick="toggleRawResponseModal()"
+              class="text-[11px] font-mono text-blue-600 hover:underline"
+            >
+              Inspect Raw Response JSON
+            </button>
+          </div>
+
+          <div class="border border-[#e2e8f0] rounded overflow-hidden">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-[#e2e8f0] text-[11px] font-mono uppercase text-slate-500">
+                  <th class="py-2 px-3 w-20">Code</th>
+                  <th class="py-2 px-3">Risk Explanation (`text`)</th>
+                  <th class="py-2 px-3 w-36">Top Feature</th>
+                  <th class="py-2 px-3 w-44 text-right">Log-Odds Contribution</th>
+                </tr>
+              </thead>
+              <tbody id="reasonCodesTbody" class="divide-y divide-slate-200 text-xs">
+                <tr>
+                  <td colspan="4" class="py-6 text-center font-mono text-slate-400">
+                    Click "Execute /v1/score" to evaluate transaction and compute reason codes.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Raw JSON Response Collapsible Drawer -->
+          <div id="rawResponseDrawer" class="hidden mt-3">
+            <div class="flex items-center justify-between bg-slate-900 text-slate-300 px-3 py-1.5 rounded-t text-[11px] font-mono border-b border-slate-800">
+              <span>Server Response Body (`application/json`)</span>
+              <button type="button" onclick="copyResponseJson()" id="copyRespBtn" class="text-xs text-blue-400 hover:text-blue-300">Copy JSON</button>
+            </div>
+            <pre id="rawResponsePre" class="bg-slate-950 text-emerald-300 font-mono text-[11px] p-3 rounded-b overflow-x-auto max-h-60 leading-relaxed"></pre>
+          </div>
+        </div>
+
+        <!-- ANALYST ADJUDICATION & GROUND-TRUTH LABEL FEEDBACK (POST /v1/labels) -->
+        <div class="px-4 py-3 bg-[#f8fafc] border-t border-[#e2e8f0] flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-blue-600 text-white rounded">POST</span>
+            <span class="font-mono font-semibold text-xs text-slate-800">/v1/labels</span>
+            <span class="text-xs text-slate-500">Ingest Ground-Truth Feedback (`LabelFeedback`)</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onclick="submitLabelFeedback(1)"
+              class="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-300 rounded text-xs font-medium font-mono transition"
+              title="Send label=1 (Confirmed Fraud) to POST /v1/labels"
+            >
+              Confirm Fraud (label=1)
+            </button>
+            <button
+              type="button"
+              onclick="submitLabelFeedback(0)"
+              class="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded text-xs font-medium font-mono transition"
+              title="Send label=0 (Legitimate) to POST /v1/labels"
+            >
+              Mark Legitimate (label=0)
+            </button>
+            <button
+              type="button"
+              onclick="toggleCustomLabelDrawer()"
+              class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 rounded text-xs font-mono transition"
+            >
+              Payload...
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Label Feedback Payload Editor & Status Strip -->
+        <div id="customLabelDrawer" class="hidden px-4 py-3 bg-slate-100/80 border-t border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono text-slate-600">Edit `LabelFeedback` JSON Body before sending to `POST /v1/labels`:</span>
+            <button
+              type="button"
+              onclick="sendCustomLabelJson()"
+              class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white font-mono text-xs rounded"
+            >
+              Send to /v1/labels
+            </button>
+          </div>
+          <textarea
+            id="labelPayloadTextarea"
+            rows="3"
+            spellcheck="false"
+            class="w-full font-mono text-xs bg-white text-slate-900 p-2 rounded border border-slate-300 focus:outline-none focus:border-blue-600"
+          ></textarea>
+        </div>
+
+        <!-- Label Feedback Response Toast Bar -->
+        <div id="labelFeedbackStatus" class="hidden px-4 py-2 bg-slate-900 text-slate-100 font-mono text-xs flex items-center justify-between">
+          <span id="labelFeedbackText"></span>
+          <button type="button" onclick="document.getElementById('labelFeedbackStatus').classList.add('hidden')" class="text-slate-400 hover:text-white">✕</button>
+        </div>
+
+      </div>
+
+      <!-- SESSION EVALUATION AUDIT LOG TABLE -->
+      <div class="bg-white border border-[#e2e8f0] rounded-[5px] shadow-[0_1px_2px_rgba(15,23,42,0.03)] overflow-hidden">
+        <div class="px-4 py-2.5 border-b border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-700">Session Evaluation Ledger</h3>
+            <span id="historyCountBadge" class="px-1.5 py-0.5 text-[10px] font-mono bg-slate-200 text-slate-700 rounded">0</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              onclick="exportSessionAuditJson()"
+              class="text-[11px] font-mono text-slate-600 hover:text-slate-900 px-2 py-0.5 border border-slate-300 rounded bg-white"
+            >
+              Export JSON
+            </button>
+            <button
+              type="button"
+              onclick="clearSessionAudit()"
+              class="text-[11px] font-mono text-slate-500 hover:text-red-600 px-2 py-0.5"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-[#e2e8f0] bg-slate-50/70 text-[11px] font-mono text-slate-500 uppercase">
+                <th class="py-2 px-3">Time</th>
+                <th class="py-2 px-3">txn_id</th>
+                <th class="py-2 px-3 text-right">Amount</th>
+                <th class="py-2 px-3">Customer → Ben.</th>
+                <th class="py-2 px-3">Decision</th>
+                <th class="py-2 px-3 text-right">Fraud Prob</th>
+                <th class="py-2 px-3">Top Reason</th>
+                <th class="py-2 px-3 text-right">Latency</th>
+              </tr>
+            </thead>
+            <tbody id="auditLogTbody" class="divide-y divide-slate-200 font-mono text-xs">
+              <tr>
+                <td colspan="8" class="py-5 text-center text-slate-400">
+                  No transactions scored in this session yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- JAVASCRIPT ENGINE -->
+  <script>
+    // ============================================================================
+    // PRESET FIXTURES (Matching exact PaymentEvent schema from user screenshots)
+    // ============================================================================
+    const PRESETS = {
+      swagger_default: {
+        txn_id: 182990,
+        event_time: 8675470,
+        is_a2a: 1,
+        amount: 431.24,
+        customer_id: 10267,
+        card_id: -1,
+        device_id: 10267,
+        ip_id: 10267,
+        merchant_id: -1,
+        beneficiary_id: 30338,
+        merchant_cat: -1,
+        ip_country: 2,
+        geo_lat: 55.043,
+        geo_lon: -2.174,
+        ip_rep: 0.0,
+        bin_risk: 0.0,
+        signup_time: -51580800,
+        kyc_level: 3,
+        risk_tier: 2,
+        home_country: 2
+      },
+      legit_card: {
+        txn_id: 183041,
+        event_time: 8676120,
+        is_a2a: 0,
+        amount: 28.50,
+        customer_id: 10412,
+        card_id: 50911,
+        device_id: 10412,
+        ip_id: 10412,
+        merchant_id: 2045,
+        beneficiary_id: -1,
+        merchant_cat: 5411,
+        ip_country: 1,
+        geo_lat: 51.507,
+        geo_lon: -0.127,
+        ip_rep: 0.02,
+        bin_risk: 0.01,
+        signup_time: -62000000,
+        kyc_level: 3,
+        risk_tier: 1,
+        home_country: 1
+      },
+      high_risk_ring: {
+        txn_id: 183109,
+        event_time: 8678900,
+        is_a2a: 1,
+        amount: 2490.00,
+        customer_id: 19804,
+        card_id: -1,
+        device_id: 88321,
+        ip_id: 99412,
+        merchant_id: -1,
+        beneficiary_id: 30338,
+        merchant_cat: -1,
+        ip_country: 5,
+        geo_lat: 48.856,
+        geo_lon: 2.352,
+        ip_rep: 0.84,
+        bin_risk: 0.45,
+        signup_time: 8650000,
+        kyc_level: 1,
+        risk_tier: 3,
+        home_country: 2
+      }
+    };
+
+    const INTEGER_FIELDS = [
+      'txn_id', 'event_time', 'is_a2a', 'customer_id', 'card_id',
+      'device_id', 'ip_id', 'merchant_id', 'beneficiary_id',
+      'merchant_cat', 'ip_country', 'signup_time', 'kyc_level',
+      'risk_tier', 'home_country'
+    ];
+
+    const FLOAT_FIELDS = [
+      'amount', 'geo_lat', 'geo_lon', 'ip_rep', 'bin_risk'
+    ];
+
+    let currentInputView = 'form'; // 'form' | 'json'
+    let lastScoredPayload = null;
+    let lastScoredResponse = null;
+    let sessionAuditHistory = [];
+
+    // ============================================================================
+    // INITIALIZATION
+    // ============================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPreset('swagger_default');
+      checkHealth(false);
+
+      // Keep cURL preview updated when form inputs change
+      document.getElementById('scoreForm').addEventListener('input', () => {
+        if (currentInputView === 'form') {
+          syncFormToJsonTextarea();
+        }
+        updateCurlPreview();
+      });
+    });
+
+    function getApiBase() {
+      const raw = document.getElementById('apiHostInput').value.trim();
+      return raw.replace(/\/+$/, '');
+    }
+
+    // ============================================================================
+    // 1. HEALTH CHECK (GET /healthz)
+    // ============================================================================
+    async function checkHealth(manualTrigger = false) {
+      const dot = document.getElementById('healthDot');
+      const statusText = document.getElementById('healthStatusText');
+      const modelEl = document.getElementById('metaModelVer');
+      const policyEl = document.getElementById('metaPolicyVer');
+      const circuitEl = document.getElementById('metaCircuit');
+      const banner = document.getElementById('connectionAlertBanner');
+
+      dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+      statusText.textContent = 'PINGING...';
+
+      const baseUrl = getApiBase();
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+        const res = await fetch(`${baseUrl}/healthz`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        statusText.textContent = `ONLINE (${(data.status || 'ok').toUpperCase()})`;
+        modelEl.textContent = data.model_version || 'v1';
+        policyEl.textContent = data.policy_version || 'policy-1.0';
+        circuitEl.textContent = data.circuit_open === false ? 'CLOSED (OK)' : 'OPEN (TRIPPED)';
+        circuitEl.className = data.circuit_open ? 'text-red-400 font-semibold' : 'text-emerald-400 font-medium';
+
+        banner.classList.add('hidden');
+      } catch (err) {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        statusText.textContent = 'LOCALHOST OFFLINE / SIMULATOR READY';
+        modelEl.textContent = 'v1 (sim)';
+        policyEl.textContent = 'policy-1.0';
+        circuitEl.textContent = 'CLOSED';
+        banner.classList.remove('hidden');
+      }
+    }
+
+    // ============================================================================
+    // 2. FORM <-> RAW JSON SYNCHRONIZATION
+    // ============================================================================
+    function loadPreset(presetKey) {
+      const data = PRESETS[presetKey];
+      if (!data) return;
+
+      Object.keys(data).forEach(key => {
+        const input = document.getElementById(`f_${key}`);
+        if (input) input.value = data[key];
+      });
+
+      syncFormToJsonTextarea();
+      updateCurlPreview();
+      syncLabelDrawerFromPayload(data);
+    }
+
+    function readPayloadFromForm() {
+      const payload = {};
+      INTEGER_FIELDS.forEach(k => {
+        const el = document.getElementById(`f_${k}`);
+        payload[k] = el ? parseInt(el.value, 10) : 0;
+      });
+      FLOAT_FIELDS.forEach(k => {
+        const el = document.getElementById(`f_${k}`);
+        payload[k] = el ? parseFloat(el.value) : 0.0;
+      });
+      return payload;
+    }
+
+    function syncFormToJsonTextarea() {
+      const payload = readPayloadFromForm();
+      const textarea = document.getElementById('rawJsonTextarea');
+      textarea.value = JSON.stringify(payload, null, 2);
+      document.getElementById('jsonParseError').classList.add('hidden');
+    }
+
+    function syncJsonTextareaToForm() {
+      const textarea = document.getElementById('rawJsonTextarea');
+      const errBox = document.getElementById('jsonParseError');
+      try {
+        const parsed = JSON.parse(textarea.value);
+        Object.keys(parsed).forEach(key => {
+          const el = document.getElementById(`f_${key}`);
+          if (el !== null && el !== undefined) {
+            el.value = parsed[key];
+          }
+        });
+        errBox.classList.add('hidden');
+        return parsed;
+      } catch (e) {
+        errBox.textContent = `Invalid JSON syntax: ${e.message}`;
+        errBox.classList.remove('hidden');
+        return null;
+      }
+    }
+
+    function setInputView(mode) {
+      const formContainer = document.getElementById('structuredFormContainer');
+      const jsonContainer = document.getElementById('rawJsonContainer');
+      const tabFormBtn = document.getElementById('tabFormBtn');
+      const tabJsonBtn = document.getElementById('tabJsonBtn');
+
+      if (mode === 'json') {
+        syncFormToJsonTextarea();
+        formContainer.classList.add('hidden');
+        jsonContainer.classList.remove('hidden');
+        tabJsonBtn.className = 'px-2 py-0.5 rounded-[3px] bg-slate-900 text-white transition font-mono';
+        tabFormBtn.className = 'px-2 py-0.5 rounded-[3px] text-slate-600 hover:text-slate-900 transition';
+        currentInputView = 'json';
+      } else {
+        const ok = syncJsonTextareaToForm();
+        if (!ok) return;
+        jsonContainer.classList.add('hidden');
+        formContainer.classList.remove('hidden');
+        tabFormBtn.className = 'px-2 py-0.5 rounded-[3px] bg-slate-900 text-white transition';
+        tabJsonBtn.className = 'px-2 py-0.5 rounded-[3px] text-slate-600 hover:text-slate-900 transition font-mono';
+        currentInputView = 'form';
+      }
+      updateCurlPreview();
+    }
+
+    function formatJsonEditor() {
+      const parsed = syncJsonTextareaToForm();
+      if (parsed) {
+        document.getElementById('rawJsonTextarea').value = JSON.stringify(parsed, null, 2);
+      }
+    }
+
+    function incrementTxnId() {
+      const el = document.getElementById('f_txn_id');
+      el.value = (parseInt(el.value || '182990', 10) + 1);
+      if (currentInputView === 'json') {
+        const parsed = syncJsonTextareaToForm();
+        if (parsed) {
+          parsed.txn_id = parseInt(el.value, 10);
+          document.getElementById('rawJsonTextarea').value = JSON.stringify(parsed, null, 2);
+        }
+      } else {
+        syncFormToJsonTextarea();
+      }
+      updateCurlPreview();
+    }
+
+    function updateCurlPreview() {
+      let payloadObj;
+      if (currentInputView === 'json') {
+        try {
+          payloadObj = JSON.parse(document.getElementById('rawJsonTextarea').value);
+        } catch {
+          payloadObj = readPayloadFromForm();
+        }
+      } else {
+        payloadObj = readPayloadFromForm();
+      }
+      const baseUrl = getApiBase();
+      const singleLineJson = JSON.stringify(payloadObj);
+      const curl = `curl -X 'POST' \\\n  '${baseUrl}/v1/score' \\\n  -H 'accept: application/json' \\\n  -H 'Content-Type: application/json' \\\n  -d '${singleLineJson}'`;
+      document.getElementById('curlPreviewBox').textContent = curl;
+    }
+
+    function copyTextToClipboard(text, btnElement, originalLabel) {
+      const temp = document.createElement('textarea');
+      temp.value = text;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+
+      if (btnElement) {
+        btnElement.textContent = 'Copied!';
+        setTimeout(() => { btnElement.textContent = originalLabel; }, 1400);
+      }
+    }
+
+    function copyCurlCommand() {
+      const text = document.getElementById('curlPreviewBox').textContent;
+      copyTextToClipboard(text, document.getElementById('copyCurlBtn'), 'Copy');
+    }
+
+    function copyResponseJson() {
+      const text = document.getElementById('rawResponsePre').textContent;
+      copyTextToClipboard(text, document.getElementById('copyRespBtn'), 'Copy JSON');
+    }
+
+    // ============================================================================
+    // 3. EXECUTE SCORING (POST /v1/score) WITH REALISTIC FALLBACK
+    // ============================================================================
+    async function handleScoreSubmit(e) {
+      e.preventDefault();
+
+      let payload;
+      if (currentInputView === 'json') {
+        payload = syncJsonTextareaToForm();
+        if (!payload) return;
+      } else {
+        payload = readPayloadFromForm();
+        syncFormToJsonTextarea();
+      }
+
+      const submitBtn = document.getElementById('evaluateSubmitBtn');
+      const spin = document.getElementById('requestSpinIndicator');
+      const statusLabel = document.getElementById('lastRequestLatency');
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-75');
+      spin.classList.remove('hidden');
+      statusLabel.textContent = 'Scoring transaction...';
+
+      const baseUrl = getApiBase();
+      const t0 = performance.now();
+
+      try {
+        const res = await fetch(`${baseUrl}/v1/score`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const latencyMs = Math.round(performance.now() - t0);
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`);
+        }
+
+        renderScoreOutput(payload, data, res.status, latencyMs, 'LIVE FASTAPI');
+        statusLabel.textContent = `200 OK in ${latencyMs} ms`;
+        document.getElementById('connectionAlertBanner').classList.add('hidden');
+      } catch (err) {
+        const latencyMs = Math.round(performance.now() - t0);
+        const useFallback = document.getElementById('fallbackModeToggle').checked;
+
+        if (useFallback) {
+          const simulatedResponse = simulateLocalModelScore(payload);
+          renderScoreOutput(payload, simulatedResponse, 200, latencyMs, 'FALLBACK SIMULATOR');
+          statusLabel.textContent = `Simulated (${latencyMs} ms) — API unreachable`;
+          document.getElementById('connectionAlertBanner').classList.remove('hidden');
+        } else {
+          statusLabel.textContent = `Request Error: ${err.message}`;
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-75');
+        spin.classList.add('hidden');
+      }
+    }
+
+    // Deterministic fallback simulator that reproduces the exact response for txn #182990
+    // and realistic dynamic calculations for edited inputs when localhost is down.
+    function simulateLocalModelScore(p) {
+      if (
+        Number(p.txn_id) === 182990 &&
+        Math.abs(Number(p.amount) - 431.24) < 0.01 &&
+        Number(p.beneficiary_id) === 30338
+      ) {
+        return {
+          txn_id: 182990,
+          decision: "decline",
+          fraud_probability: 0.782608695652,
+          probability_band: [0.5809611981726508, 0.9033616439828094],
+          reason_codes: [
+            {
+              code: "RC04",
+              text: "Amount is unusual compared with the customer's history",
+              contribution: 2.9471,
+              top_feature: "amount"
+            },
+            {
+              code: "RC07",
+              text: "Linked to previously confirmed fraud",
+              contribution: 2.8896,
+              top_feature: "g_ben_taint"
+            },
+            {
+              code: "RC08",
+              text: "Merchant or category risk",
+              contribution: 1.3116,
+              top_feature: "mer_sum_7d"
+            }
+          ],
+          scoring_mode: "full"
+        };
+      }
+
+      // Dynamic heuristic for other test cases
+      let logit = -2.1;
+      const reasons = [];
+
+      if (p.amount > 300) {
+        const c = Number((Math.min(3.8, (p.amount / 250) * 1.65)).toFixed(4));
+        logit += c * 0.55;
+        reasons.push({
+          code: "RC04",
+          text: "Amount is unusual compared with the customer's history",
+          contribution: c,
+          top_feature: "amount"
+        });
+      }
+
+      if (p.beneficiary_id === 30338 || p.risk_tier >= 2) {
+        const c = p.beneficiary_id === 30338 ? 2.8896 : 1.4210;
+        logit += c * 0.5;
+        reasons.push({
+          code: "RC07",
+          text: "Linked to previously confirmed fraud",
+          contribution: c,
+          top_feature: "g_ben_taint"
+        });
+      }
+
+      if (p.ip_rep > 0.3 || p.ip_country !== p.home_country) {
+        const c = Number((1.15 + p.ip_rep * 2.1).toFixed(4));
+        logit += c * 0.6;
+        reasons.push({
+          code: "RC02",
+          text: "Anomalous network reputation or cross-border IP mismatch",
+          contribution: c,
+          top_feature: "ip_rep"
+        });
+      }
+
+      if (p.is_a2a === 1 && p.kyc_level <= 2) {
+        const c = 1.5420;
+        logit += 0.75;
+        reasons.push({
+          code: "RC05",
+          text: "High-velocity account-to-account transfer on low KYC tier",
+          contribution: c,
+          top_feature: "kyc_level"
+        });
+      }
+
+      if (reasons.length === 0) {
+        reasons.push({
+          code: "RC01",
+          text: "Baseline behavioral profile within normal customer bounds",
+          contribution: 0.1840,
+          top_feature: "cust_txn_cnt_24h"
+        });
+      }
+
+      reasons.sort((a, b) => b.contribution - a.contribution);
+
+      const prob = 1 / (1 + Math.exp(-logit));
+      const low = Math.max(0.01, prob - 0.16);
+      const high = Math.min(0.99, prob + 0.12);
+
+      let decision = "approve";
+      if (prob >= 0.65) decision = "decline";
+      else if (prob >= 0.35) decision = "review";
+
+      return {
+        txn_id: p.txn_id,
+        decision,
+        fraud_probability: Number(prob.toFixed(12)),
+        probability_band: [Number(low.toFixed(12)), Number(high.toFixed(12))],
+        reason_codes: reasons.slice(0, 4),
+        scoring_mode: "full"
+      };
+    }
+
+    // ============================================================================
+    // 4. RENDER SCORE TELEMETRY & REASON CODES
+    // ============================================================================
+    function renderScoreOutput(requestPayload, res, httpCode, latencyMs, sourceLabel) {
+      lastScoredPayload = requestPayload;
+      lastScoredResponse = res;
+
+      const decision = (res.decision || 'unknown').toLowerCase();
+      const badge = document.getElementById('decisionBadge');
+      const banner = document.getElementById('decisionBanner');
+
+      if (decision === 'decline' || decision === 'block') {
+        badge.textContent = 'DECLINE';
+        badge.className = 'px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider rounded bg-[#dc2626] text-white border border-red-700';
+        banner.className = 'px-4 py-3 border-b border-red-200 bg-red-50/50 flex flex-wrap items-center justify-between gap-3';
+      } else if (decision === 'approve' || decision === 'allow') {
+        badge.textContent = 'APPROVE';
+        badge.className = 'px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider rounded bg-[#16a34a] text-white border border-emerald-700';
+        banner.className = 'px-4 py-3 border-b border-emerald-200 bg-emerald-50/50 flex flex-wrap items-center justify-between gap-3';
+      } else {
+        badge.textContent = decision.toUpperCase();
+        badge.className = 'px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider rounded bg-[#d97706] text-white border border-amber-700';
+        banner.className = 'px-4 py-3 border-b border-amber-200 bg-amber-50/50 flex flex-wrap items-center justify-between gap-3';
+      }
+
+      document.getElementById('outTxnId').textContent = res.txn_id ?? requestPayload.txn_id;
+      document.getElementById('outScoringMode').textContent = res.scoring_mode || 'full';
+      document.getElementById('outHttpCode').textContent = `${httpCode} OK`;
+      document.getElementById('outLatency').textContent = `${latencyMs} ms`;
+
+      const sourceTag = document.getElementById('sourceTag');
+      sourceTag.classList.remove('hidden');
+      sourceTag.textContent = sourceLabel;
+      sourceTag.className = sourceLabel === 'LIVE FASTAPI'
+        ? 'px-1.5 py-0.5 text-[10px] font-mono rounded bg-emerald-100 text-emerald-800 border border-emerald-300'
+        : 'px-1.5 py-0.5 text-[10px] font-mono rounded bg-amber-100 text-amber-800 border border-amber-300';
+
+      // Probability & Band
+      const prob = Number(res.fraud_probability || 0);
+      const band = Array.isArray(res.probability_band) && res.probability_band.length === 2
+        ? res.probability_band
+        : [prob, prob];
+
+      document.getElementById('outProbPercent').textContent = `${(prob * 100).toFixed(2)}%`;
+      document.getElementById('outProbRaw').textContent = `(${prob.toFixed(6)})`;
+      document.getElementById('outProbBandText').textContent = `[${Number(band[0]).toFixed(4)} — ${Number(band[1]).toFixed(4)}]`;
+
+      const leftPct = Math.max(0, Math.min(100, band[0] * 100));
+      const widthPct = Math.max(1, Math.min(100 - leftPct, (band[1] - band[0]) * 100));
+      const pointPct = Math.max(0, Math.min(100, prob * 100));
+
+      const bandBar = document.getElementById('gaugeBandBar');
+      bandBar.style.left = `${leftPct}%`;
+      bandBar.style.width = `${widthPct}%`;
+      bandBar.className = decision === 'decline'
+        ? 'absolute inset-y-1.5 bg-red-200/90 border border-red-400 rounded-sm transition-all duration-300'
+        : decision === 'approve'
+          ? 'absolute inset-y-1.5 bg-emerald-200/90 border border-emerald-400 rounded-sm transition-all duration-300'
+          : 'absolute inset-y-1.5 bg-amber-200/90 border border-amber-400 rounded-sm transition-all duration-300';
+
+      document.getElementById('gaugePointMarker').style.left = `${pointPct}%`;
+
+      // Reason Codes Table
+      const reasons = Array.isArray(res.reason_codes) ? res.reason_codes : [];
+      document.getElementById('reasonCountBadge').textContent = reasons.length;
+      const tbody = document.getElementById('reasonCodesTbody');
+
+      if (reasons.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center font-mono text-slate-400">No reason codes returned.</td></tr>`;
+      } else {
+        const maxContrib = Math.max(...reasons.map(r => Math.abs(Number(r.contribution || 0))), 3.5);
+        tbody.innerHTML = reasons.map(r => {
+          const contrib = Number(r.contribution || 0);
+          const barWidth = Math.min(100, Math.round((Math.abs(contrib) / maxContrib) * 100));
+          return `
+            <tr class="hover:bg-slate-50/80">
+              <td class="py-2.5 px-3 font-mono font-semibold text-slate-900">
+                <span class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-[11px]">${escapeHtml(r.code || '--')}</span>
+              </td>
+              <td class="py-2.5 px-3 text-slate-800">${escapeHtml(r.text || '')}</td>
+              <td class="py-2.5 px-3 font-mono">
+                <span class="px-1.5 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded text-[11px]">${escapeHtml(r.top_feature || '--')}</span>
+              </td>
+              <td class="py-2.5 px-3 font-mono text-right tabular-nums">
+                <div class="flex items-center justify-end gap-2">
+                  <div class="w-16 h-2 bg-slate-100 rounded overflow-hidden border border-slate-200">
+                    <div class="h-full ${contrib >= 1.5 ? 'bg-red-500' : 'bg-amber-500'}" style="width:${barWidth}%"></div>
+                  </div>
+                  <span class="font-semibold text-slate-900">+${contrib.toFixed(4)}</span>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Raw Response JSON
+      document.getElementById('rawResponsePre').textContent = JSON.stringify(res, null, 2);
+
+      // Update Label Drawer Default Payload
+      syncLabelDrawerFromPayload(requestPayload);
+
+      // Append to Session Audit Ledger
+      addAuditEntry(requestPayload, res, latencyMs);
+    }
+
+    function toggleRawResponseModal() {
+      const drawer = document.getElementById('rawResponseDrawer');
+      drawer.classList.toggle('hidden');
+    }
+
+    // ============================================================================
+    // 5. LABEL FEEDBACK SUBMISSION (POST /v1/labels)
+    // ============================================================================
+    function syncLabelDrawerFromPayload(payload, labelVal = 1) {
+      const labelObj = {
+        txn_id: payload.txn_id,
+        customer_id: payload.customer_id,
+        beneficiary_id: payload.beneficiary_id,
+        event_time: payload.event_time,
+        label: labelVal
+      };
+      document.getElementById('labelPayloadTextarea').value = JSON.stringify(labelObj, null, 2);
+    }
+
+    function toggleCustomLabelDrawer() {
+      document.getElementById('customLabelDrawer').classList.toggle('hidden');
+    }
+
+    async function submitLabelFeedback(labelValue) {
+      const basePayload = lastScoredPayload || readPayloadFromForm();
+      syncLabelDrawerFromPayload(basePayload, labelValue);
+      await dispatchLabelRequest(JSON.parse(document.getElementById('labelPayloadTextarea').value));
+    }
+
+    async function sendCustomLabelJson() {
+      try {
+        const parsed = JSON.parse(document.getElementById('labelPayloadTextarea').value);
+        await dispatchLabelRequest(parsed);
+      } catch (err) {
+        showLabelStatus(`Invalid JSON in LabelFeedback: ${err.message}`, true);
+      }
+    }
+
+    async function dispatchLabelRequest(labelBody) {
+      const baseUrl = getApiBase();
+      try {
+        const res = await fetch(`${baseUrl}/v1/labels`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(labelBody)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`);
+        }
+        showLabelStatus(
+          `POST /v1/labels → ${res.status} Accepted | txn_id=${labelBody.txn_id} (label=${labelBody.label}) | Response: ${JSON.stringify(data)}`,
+          false
+        );
+      } catch (err) {
+        const useFallback = document.getElementById('fallbackModeToggle').checked;
+        if (useFallback) {
+          showLabelStatus(
+            `POST /v1/labels (Simulated 202 Accepted) | txn_id=${labelBody.txn_id} (label=${labelBody.label}) → {"accepted": true}`,
+            false
+          );
+        } else {
+          showLabelStatus(`POST /v1/labels failed: ${err.message}`, true);
+        }
+      }
+    }
+
+    function showLabelStatus(msg, isError) {
+      const bar = document.getElementById('labelFeedbackStatus');
+      const text = document.getElementById('labelFeedbackText');
+      bar.classList.remove('hidden');
+      bar.className = isError
+        ? 'px-4 py-2 bg-red-900 text-red-100 font-mono text-xs flex items-center justify-between'
+        : 'px-4 py-2 bg-slate-900 text-emerald-300 font-mono text-xs flex items-center justify-between';
+      text.textContent = msg;
+    }
+
+    // ============================================================================
+    // 6. SESSION AUDIT LEDGER
+    // ============================================================================
+    function addAuditEntry(req, res, latencyMs) {
+      const entry = {
+        timestamp: new Date().toLocaleTimeString([], { hour12: false }),
+        request: req,
+        response: res,
+        latencyMs
+      };
+      sessionAuditHistory.unshift(entry);
+      renderAuditTable();
+    }
+
+    function renderAuditTable() {
+      const tbody = document.getElementById('auditLogTbody');
+      document.getElementById('historyCountBadge').textContent = sessionAuditHistory.length;
+
+      if (sessionAuditHistory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-5 text-center text-slate-400">No transactions scored in this session yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = sessionAuditHistory.map((item, idx) => {
+        const d = (item.response.decision || '').toLowerCase();
+        const pillClass = d === 'decline'
+          ? 'bg-red-100 text-red-800 border-red-300'
+          : d === 'approve'
+            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+            : 'bg-amber-100 text-amber-800 border-amber-300';
+
+        const topReason = (item.response.reason_codes && item.response.reason_codes[0])
+          ? `${item.response.reason_codes[0].code} (${item.response.reason_codes[0].top_feature})`
+          : '--';
+
+        return `
+          <tr onclick="restoreAuditItem(${idx})" class="hover:bg-blue-50/50 cursor-pointer transition" title="Click to load this transaction">
+            <td class="py-2 px-3 text-slate-500 tabular-nums">${item.timestamp}</td>
+            <td class="py-2 px-3 font-semibold text-slate-900 tabular-nums">#${item.request.txn_id}</td>
+            <td class="py-2 px-3 text-right font-medium text-slate-900 tabular-nums">${Number(item.request.amount).toFixed(2)}</td>
+            <td class="py-2 px-3 text-slate-600 tabular-nums">${item.request.customer_id} → ${item.request.beneficiary_id}</td>
+            <td class="py-2 px-3">
+              <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase border rounded ${pillClass}">${escapeHtml(item.response.decision)}</span>
+            </td>
+            <td class="py-2 px-3 text-right font-semibold tabular-nums">${(Number(item.response.fraud_probability) * 100).toFixed(2)}%</td>
+            <td class="py-2 px-3 text-slate-600">${escapeHtml(topReason)}</td>
+            <td class="py-2 px-3 text-right text-slate-500 tabular-nums">${item.latencyMs} ms</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function restoreAuditItem(idx) {
+      const item = sessionAuditHistory[idx];
+      if (!item) return;
+      Object.keys(item.request).forEach(k => {
+        const el = document.getElementById(`f_${k}`);
+        if (el) el.value = item.request[k];
+      });
+      syncFormToJsonTextarea();
+      updateCurlPreview();
+      renderScoreOutput(item.request, item.response, 200, item.latencyMs, 'AUDIT REPLAY');
+    }
+
+    function clearSessionAudit() {
+      sessionAuditHistory = [];
+      renderAuditTable();
+    }
+
+    function exportSessionAuditJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionAuditHistory, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `meridian_audit_${Date.now()}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+// Cloud Deployment Auto-Detect (Hugging Face / Render)
+  window.addEventListener('DOMContentLoaded', () => {
+    if (window.location.protocol.startsWith('http') && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+      document.querySelectorAll('input').forEach(inp => {
+        if (inp.value && inp.value.includes('localhost:8000')) {
+          inp.value = window.location.origin;
+          inp.dispatchEvent(new Event('input'));
+          inp.dispatchEvent(new Event('change'));
+        }
+      });
+    }
+  });
+
+  </script>
+</body>
+</html>

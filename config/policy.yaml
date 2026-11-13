@@ -1,0 +1,23 @@
+# Business-owned decision policy (BR-06): change costs / budget here, no model redeploy needed.
+# Expected cost of each action for a payment of amount A with calibrated fraud probability p:
+#   approve : p * (A*loss_multiplier + chargeback_fee)
+#   step_up : fixed + (1-p)*abandon_rate*(A*revenue_rate + false_fixed) + p*(1-effectiveness)*loss
+#   review  : fixed + (1-p)*abandon_rate*(A*revenue_rate + false_fixed) + p*(1-effectiveness)*loss + shadow_price
+#   decline : (1-p)*(false_fixed + A*revenue_rate)
+version: "policy-1.0"
+review_rate_budget: 0.005       # max share of payments sent to manual review
+review_shadow_price: 0.0        # calibrated by the train step so the budget holds
+step_up_rate_budget: 0.02       # max share of payments that get step-up authentication (customer friction)
+step_up_shadow_price: 0.0       # calibrated by the train step
+risk_limit_amount: 1000         # fallback rules never auto-approve unscored payments above this
+defaults:
+  loss_multiplier: 1.0
+  chargeback_fee: 15.0
+  false_fixed: 8.0              # customer attrition cost of a false decline
+  revenue_rate: 0.02
+  step_up:  {fixed: 0.60, abandon_rate: 0.04, effectiveness: 0.85}
+  review:   {fixed: 3.20, abandon_rate: 0.05, effectiveness: 0.95}
+segments:                       # segment-specific overrides (FR-08)
+  A2A:
+    chargeback_fee: 25.0        # irreversible rail: losses are harder to recover
+    step_up: {fixed: 0.60, abandon_rate: 0.04, effectiveness: 0.75}

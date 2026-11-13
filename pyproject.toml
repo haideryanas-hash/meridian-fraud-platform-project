@@ -1,0 +1,11 @@
+[project]
+name = "fraudplat"
+version = "1.0.0"
+description = "Real-time graph-enhanced payment fraud detection (BRD-DS-001)"
+requires-python = ">=3.10"
+dependencies = ["numpy", "pandas", "scipy", "scikit-learn", "lightgbm", "python-igraph", "leidenalg",
+                "pyyaml", "pyarrow", "matplotlib", "networkx", "fastapi", "httpx", "uvicorn", "pytest"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

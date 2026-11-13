@@ -1,0 +1,51 @@
+# Meridian Pay - Real-Time Graph-Enhanced Fraud Detection (BRD-DS-001)
+# All values are build-phase settings for the synthetic proxy data. Time unit: days from t0.
+simulation:
+  seed: 42
+  n_customers: 30000
+  n_days: 210
+  n_merchants: 600
+  n_rings: 45
+  n_cnp_campaigns: 90
+  n_ato_campaigns: 70
+  holdout_rate: 0.03          # randomised approve-and-observe holdout (BRD 9.4)
+
+labels:                       # chargeback delays scaled 2/3 from BRD (30-90d) to fit a 210-day build
+  analyst_share: 0.5
+  analyst_delay_days: [2, 5]
+  chargeback_delay_days: [20, 60]
+  maturity_days: 60
+
+splits:                       # strict out-of-time (BRD 12)
+  train_end_day: 70
+  stack_split_day: 88         # stacker fit on [70,88), isotonic calibration on [88,100)
+  val_end_day: 100
+  test_start_day: 100
+  early_stop_days: 10         # last N days of train window used for GBDT early stopping
+
+features:
+  scan_cap: 400
+
+gnn:
+  snapshot_days: 7
+  hidden: 32
+  fanout: 12
+  epochs: 160
+  lr: 0.01
+  weight_decay: 0.0001
+  seed: 7
+
+rings:
+  window_days: 14
+  hub_cap: 25
+  min_accounts: 3
+  flag_score: 3.0
+
+monitoring:
+  psi_alert: 0.2
+fairness:
+  ratio_alert: 1.25
+  min_segment_n: 500
+
+policy_file: config/policy.yaml
+reason_codes_file: config/reason_codes.yaml

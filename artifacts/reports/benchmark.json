@@ -1,0 +1,55 @@
+{
+  "events_scored": 6000,
+  "warm_up_replay_seconds": 7.8,
+  "latency": {
+    "n": 6000,
+    "p50_ms": 13.690199994016439,
+    "p95_ms": 19.3103900004644,
+    "p99_ms": 26.25073699862697,
+    "max_ms": 108.91939990688115,
+    "modes": {
+      "full": 6000
+    },
+    "tier_errors": {},
+    "last_errors": []
+  },
+  "single_core_throughput_tps": 69.06848016373343,
+  "parity_vs_offline": {
+    "feature_max_abs_diff": 0.0,
+    "p_cal_max_abs_diff": 0.0,
+    "decision_agreement": 1.0
+  },
+  "audit": {
+    "records": 6000,
+    "chain_valid": true,
+    "replay_reproduces_decision": 1.0
+  },
+  "reason_code_coverage_non_approve": 1.0,
+  "fallbacks": {
+    "full_down": {
+      "modes": {
+        "light": 400
+      },
+      "no_unscored_approval_above_limit": true,
+      "p99_ms": 15.151905998354776
+    },
+    "full_and_light_down": {
+      "modes": {
+        "rules": 400
+      },
+      "no_unscored_approval_above_limit": true,
+      "p99_ms": 0.062318007694557295
+    }
+  },
+  "http": {
+    "n": 400,
+    "p50_ms": 25.777350005228072,
+    "p99_ms": 38.85317190666683
+  },
+  "decision_mix": {
+    "approve": 0.9583,
+    "step_up": 0.0262,
+    "decline": 0.0102,
+    "review": 0.0053
+  }
+}
