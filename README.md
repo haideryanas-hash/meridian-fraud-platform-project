@@ -1,5 +1,7 @@
 # Real-Time Graph-Enhanced Payment Fraud Detection (BRD-DS-001, Meridian Pay)
 
+https://meridian-fraud-platform-project.onrender.com/
+
 A runnable, tested implementation of the BRD's fraud platform on **synthetic data**: streaming-style features, an entity graph
 with GNN scores, anomaly detection, a calibrated ensemble, an expected-cost decision policy, reason codes, ring detection,
 a scoring API with fallbacks and an audit log, and safe-rollout tooling.
